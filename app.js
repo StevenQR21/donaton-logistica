@@ -1,52 +1,34 @@
 require('dotenv').config();
 const express = require('express');
-const cors = require('cors'); // Agregamos cors para que el Front pueda conectarse
+const cors = require('cors');
+const helmet = require('helmet');
+const logger = require('morgan');
 const sequelize = require('./config/db');
-const logisticaRepo = require('./repositories/LogisticaRepository');
+
+// Importamos nuestras rutas limpias
+const logisticaRoutes = require('./routes/logistica');
 
 const app = express();
+const PORT = process.env.PORT || 3002; 
+
+// 1. Middlewares de Programación Defensiva
+app.use(helmet());
 app.use(cors());
+app.use(logger('dev'));
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-// 1. Ruta para ver el inventario (LA QUE PROBASTE)
-app.get('/api/logistica', async (req, res) => {
-    try {
-        const items = await logisticaRepo.obtenerInventario();
-        res.json(items);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
+// 2. Ruta de Health Check
+app.get('/health', (req, res) => {
+    res.status(200).json({ status: 'success', message: 'Microservicio de Logística funcionando' });
 });
 
-// 2. Ruta para CREAR un item (Para que no esté vacío)
-app.post('/api/logistica', async (req, res) => {
-    try {
-        const nuevo = await logisticaRepo.registrarEntrada(req.body);
-        res.status(201).json(nuevo);
-    } catch (error) {
-        res.status(400).json({ error: error.message });
-    }
-});
+app.use('/', logisticaRoutes);
 
-
-// RUTA TEMPORAL PARA CREAR UN DATO DE PRUEBA
-app.get('/api/logistica/test', async (req, res) => {
-    try {
-        const nuevo = await logisticaRepo.registrarEntrada({
-            item: "Cajas de Alimento",
-            cantidad: 50,
-            centro_acopio: "Bodega Central Santiago",
-            estado: "Disponible"
-        });
-        res.send("¡Dato de prueba creado con éxito!");
-    } catch (error) {
-        res.send("Error al crear: " + error.message);
-    }
-});
-
-const PORT = process.env.PORT || 3002; // Sugiero 3002 para no chocar con el Front o el BFF
-
-sequelize.sync().then(() => {
+// 3. Levantar el servidor
+sequelize.sync({ force: false }).then(() => {
     console.log('--- Base de datos conectada en Neon ---');
     app.listen(PORT, () => console.log(`Servicio Logística corriendo en puerto ${PORT}`));
+}).catch(err => {
+    console.error('❌ Error al conectar BD Logística:', err);
 });
