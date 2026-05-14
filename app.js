@@ -4,11 +4,9 @@ const cors = require('cors');
 const helmet = require('helmet');
 const logger = require('morgan');
 const sequelize = require('./config/db');
-
-// Importamos nuestras rutas limpias
 const logisticaRoutes = require('./routes/logistica');
-
 const app = express();
+
 const PORT = process.env.PORT || 3002; 
 
 // 1. Middlewares de Programación Defensiva
