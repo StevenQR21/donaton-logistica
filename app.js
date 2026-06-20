@@ -30,3 +30,5 @@ sequelize.sync({ force: false }).then(() => {
 }).catch(err => {
     console.error('❌ Error al conectar BD Logística:', err);
 });
+
+module.exports = app;
